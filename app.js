@@ -80,9 +80,7 @@ app.get('/csrf-token', (req, res) => {
     res.json({ csrfToken })
 })
 
-// Rotas
-
-app.post('/auth/signin', async (req, res) => {
+app.post('/auth/signin', csrfSynchronisedProtection, csrfErrorHandler, async (req, res) => {
     try {
         const { email, password } = req.body
 
@@ -90,7 +88,7 @@ app.post('/auth/signin', async (req, res) => {
             return res.status(400).json({ message: 'Todos os campos são obrigatórios.' })
         }
 
-        const user = await Usuario.find({ email })
+        const user = await Usuario.findOne({ email })
 
         req.session.usuario = {
             id: user._id,
@@ -98,9 +96,16 @@ app.post('/auth/signin', async (req, res) => {
         }
 
         if (user) {
-            res.status(201).json({ message: 'Usuário cadastrado com sucesso!', user: newUser })
-            res.redirect('/')
+            res.status(200).json({ message: 'Login bem sucedido! ', user })
         }
+
+         res.status(200).json({
+            message: 'Login bem-sucedido!',
+            user: {
+                id: user._id,
+                email: user.email,
+            },
+        })
 
     } catch (error) {
         console.error('Erro ao cadastrar usuário:', error)
@@ -113,7 +118,6 @@ app.post('/auth/signin', async (req, res) => {
 
 app.post('/auth/signup', csrfSynchronisedProtection, csrfErrorHandler, async (req, res) => {
     try {
-        console.log(req.body)
         const { name, email, password } = req.body
 
         if (!name || !email || !password) {
@@ -122,12 +126,9 @@ app.post('/auth/signup', csrfSynchronisedProtection, csrfErrorHandler, async (re
 
         const newUser = await Usuario.create({ name, email, password })
 
-        req.session.usuario = {
-            id: newUser._id,
-            email: newUser.email
+        if (newUser) {
+            res.status(201).json({ message: 'Usuário cadastrado com sucesso!', user: newUser })
         }
-
-        res.status(201).json({ message: 'Usuário cadastrado com sucesso!', user: newUser })
 
     } catch (error) {
         console.error('Erro ao cadastrar usuário:', error)
