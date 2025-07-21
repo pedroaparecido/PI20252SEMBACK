@@ -89,23 +89,20 @@ app.post('/auth/signin', csrfSynchronisedProtection, csrfErrorHandler, async (re
         }
 
         const user = await Usuario.findOne({ email })
-
         req.session.usuario = {
             id: user._id,
             email: user.email
         }
-
+        
         if (user) {
-            res.status(200).json({ message: 'Login bem sucedido! ', user })
+            res.status(200).json({
+                message: 'Login bem-sucedido!',
+                user: {
+                    id: user._id,
+                    email: user.email,
+                }
+            })
         }
-
-         res.status(200).json({
-            message: 'Login bem-sucedido!',
-            user: {
-                id: user._id,
-                email: user.email,
-            },
-        })
 
     } catch (error) {
         console.error('Erro ao cadastrar usuário:', error)
