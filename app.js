@@ -18,8 +18,25 @@ const { default: MercadoPagoConfig, Payment } = require('mercadopago')
 
 const app = express()
 
+/**
+ *
+ * env production e development
+ *  
+ * 1° contratar plano gratuito de 1 ano aws ou azure
+ * 2° criar uma maquina virtual
+ * 3° criar uma rede (fornecer o ip para essa maquina virtual)
+ * 4° Nessa maquina virtual instalar o docker + gerenciador de docker (portainer) (porta 9000 adicionar docker) (como instalar docker + portainer no azure ou no aws)
+ * 5° instanciar 1 image com deploy do express.js
+ * 6° instanciar uma image com deploy react
+ * 
+ * 
+ * azure devops:
+ * pedroaparecido
+ * 
+ */
+
 const client = new MercadoPagoConfig({ 
-        accessToken: 'TEST-b6644159-b533-4cea-982d-3d4f4fcf7f4e',
+        accessToken: 'TEST-6605445776959882-100112-d0146f7d69c78146b36846a5bebd79ef-458440520',
         options: {
             timeout: 5000
         }
@@ -143,8 +160,7 @@ app.post('/auth/signin', csrfSynchronisedProtection, csrfErrorHandler, async (re
 
         req.session.usuario = {
             id: user._id,
-            email: user.email,
-            role: 'admin'
+            email: user.email
         }
         
         if (user) {
@@ -152,18 +168,13 @@ app.post('/auth/signin', csrfSynchronisedProtection, csrfErrorHandler, async (re
                 message: 'Login bem-sucedido!',
                 user: {
                     id: user._id,
-                    email: user.email,
-                    role: 'admin'
+                    email: user.email
                 }
             })
         }
-
     } catch (error) {
-        console.error('Erro ao cadastrar usuário:', error)
-        if (error.code === 11000) {
-            return res.status(409).json({ message: 'Email já cadastrado.' })
-        }
-        res.status(500).json({ message: 'Erro interno do servidor ao cadastrar usuário.' })
+        console.error('Erro ao logar com o usuário, erro:', error)
+        res.status(500).send(error.message)
     }
 })
 
@@ -177,13 +188,19 @@ app.post('/auth/signup', csrfSynchronisedProtection, csrfErrorHandler, async (re
 
         const hashedPass = await bcrypt.hash(password, salt)
 
-        const newUser = await Usuario.create({ name, email, password: hashedPass, key: req.body.keyValue, role: 'admin' })
+        const findUser = await Usuario.findOne({
+            email: email
+        })
+
+        if (findUser) return res.status(409).json({ message: 'Email já cadastrado!'})
+
+        const newUser = await Usuario.create({ name, email, password: hashedPass })
 
         if (newUser) {
             const userResponse = { ...newUser }
             delete userResponse.password
             
-            res.status(201).json({ message: 'Usuário cadastrado com sucesso!', user: userResponse })
+            res.status(201).json({ message: 'Usuário cadastrado com sucesso!' })
         }
     } catch (error) {
         console.error('Erro ao cadastrar usuário:', error)
@@ -205,7 +222,7 @@ app.post('/auth/logout', (req, res) => {
     })
 })
 
-app.use((err, req, res, next) => {
+/*app.use((err, req, res, next) => {
     console.error("Global Error Handler caught an error:", err)
     if (res.headersSent) {
         return next(err)
@@ -214,7 +231,7 @@ app.use((err, req, res, next) => {
         error: err.name || 'Internal Server Error',
         message: err.message || 'An unexpected error occurred.'
     })
-})
+})*/
 
 // ****************************fim do auth, só falta ver a comparação de senha porque qualquer um pode entrar a logica da senha é um if password === password 
 
@@ -248,19 +265,6 @@ app.post('/product/new', async (req, res) => {
     } catch (err) {
         console.error(err)
         res.status(500)
-    }
-})
-
-app.get('/product/:id', async (req, res) => {
-    try {
-        const product = await Produto.findById(req.params.id)
-        if (!product) {
-            return res.status(404).json({ message: 'Produto não encontrado.' })
-        }
-        res.status(200).json(product)
-    } catch (err) {
-        console.error('Erro ao buscar produto:', err)
-        res.status(500).json({ message: 'Erro ao buscar produto.' })
     }
 })
 
