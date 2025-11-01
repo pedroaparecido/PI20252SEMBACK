@@ -16,6 +16,8 @@ const Usuario = require('./model/usuario')
 const Endereco = require('./model/Address')
 const { default: MercadoPagoConfig, Payment } = require('mercadopago')
 
+const port =process.env.PORT || 3000
+
 const app = express()
 
 /**
@@ -503,8 +505,8 @@ app.get('/gateway/status/:paymentId', async (req, res) => {
     }
 })
 
-app.listen(3003, () => {
-    console.log('Backend rodando na porta 3003')
+app.listen(port, () => {
+    console.log(`Backend rodando na porta ${port}`)
     connectMongo()
 })
 
