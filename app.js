@@ -36,7 +36,7 @@ const app = express()
  */
 
 const client = new MercadoPagoConfig({ 
-        accessToken: 'TEST-6605445776959882-100112-d0146f7d69c78146b36846a5bebd79ef-458440520',
+        accessToken: process.env.API_MP,
         options: {
             timeout: 5000
         }
